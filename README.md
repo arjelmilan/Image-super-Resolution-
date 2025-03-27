@@ -44,9 +44,14 @@ The model is trained using DF2K with the following settings:
 
 ## Results
 Below are sample results of our model's performance:
-
-![Super-Resolution Results](results/subplot_1.png)![](results/subplot_4.png)![](results/subplot_5.png)
+<p align="center">
+  <img src="results/subplot_1.png" width="45%" />
+  <img src="results/subplot_4.png" width="45%" />
+  <img src="results/subplot_5.png" width="45%" />
+</p>
+<!-- ![Super-Resolution Results](results/subplot_1.png)![](results/subplot_4.png)![](results/subplot_5.png) -->
 ![Comparisons](results/transformer.png)
+
 The model achieves high-quality image enhancement with minimal artifacts and sharp details.
 
 
