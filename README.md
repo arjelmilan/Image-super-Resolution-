@@ -49,7 +49,7 @@ Below are sample results of our model's performance:
   <img src="results/subplot_4.png" width="30%" />
   <img src="results/subplot_5.png" width="30%" />
   <h1>Comparison with other models </h1>
-  <img src="results/transformer.png" width="45%" />
+  <img src="results/transformer.png" width="90%"/>
 </p>
 <!-- ![Super-Resolution Results](results/subplot_1.png)![](results/subplot_4.png)![](results/subplot_5.png) -->
 <!-- ![Comparisons](results/transformer.png) -->
