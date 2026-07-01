@@ -19,6 +19,7 @@ We use the **DF2K dataset**, which is a combination of:
 - **Flickr2K**: A collection of high-resolution images sourced from Flickr.
 
 The dataset provides diverse textures and details that help in learning fine-grained super-resolution mappings.
+- Performed various types of augmentations on images 
 
 ## Model
 The model is based on a **Lightweight DAT (Deformable Attention Transformer)**, which employs deformable attention mechanisms to effectively focus on important regions of an image for super-resolution. 
@@ -28,7 +29,6 @@ The model is based on a **Lightweight DAT (Deformable Attention Transformer)**, 
 - **Reduced Number of Blocks**: From 6 to **4**
 - **Reduced Attention Heads**: From 6 to **4**
 - **Number of Parameters**: **760K**
-- 
 
 ### Key Features of DAT:
 - Adaptive feature refinement
