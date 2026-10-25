@@ -1,66 +1,176 @@
-# Image Super-Resolution using Lightweight DAT
+<div align="center">
 
-This repository contains an implementation of an Image Super-Resolution (SR) model using a **Lightweight Deformable Attention Transformer (DAT)**. The model is trained on the **DF2K dataset**, a combination of DIV2K and Flickr2K datasets, to achieve high-quality upscaling of low-resolution images with reduced computational cost.
+# LDAT: A Lightweight Dual Aggregation Transformer for Image Super-Resolution
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Dataset](#dataset)
-- [Model](#model)
-- [Training](#training)
-- [Results](#results)
-- [References](#references)
+**A 738K-parameter transformer for ×4 single-image super-resolution, combining spatial-window and channel-wise self-attention.**
 
-## Introduction
-Image Super-Resolution aims to enhance the resolution of low-resolution images while preserving details and minimizing artifacts. This project leverages the power of a **Lightweight Deformable Attention Transformer (DAT)** for high-fidelity image reconstruction while maintaining efficiency.
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-implementation-EE4C2C)
+![Task](https://img.shields.io/badge/Task-Image%20Super--Resolution-green)
+![Scale](https://img.shields.io/badge/Scale-×4-lightgrey)
+![Params](https://img.shields.io/badge/Params-738K-orange)
 
-## Dataset
-We use the **DF2K dataset**, which is a combination of:
-- **DIV2K**: A dataset of high-quality images used in SR research.
-- **Flickr2K**: A collection of high-resolution images sourced from Flickr.
+[Project Report (PDF)](minor_project_Report.pdf) · [Original DAT Paper](https://arxiv.org/abs/2308.03364)
 
-The dataset provides diverse textures and details that help in learning fine-grained super-resolution mappings.
-- Performed various types of augmentations on images 
-
-## Model
-The model is based on a **Lightweight DAT (Deformable Attention Transformer)**, which employs deformable attention mechanisms to effectively focus on important regions of an image for super-resolution. 
-
-### Key Modifications in Lightweight DAT:
-- **Reduced Number of Channels**: From 180 to **60**
-- **Reduced Number of Blocks**: From 6 to **4**
-- **Reduced Attention Heads**: From 6 to **4**
-- **Number of Parameters**: **760K**
-
-### Key Features of DAT:
-- Adaptive feature refinement
-- Efficient attention mechanism
-- High-quality image reconstruction with reduced computational cost
-
-## Training
-The model is trained using DF2K with the following settings:
-- **Loss Function**: L1 Loss
-- **Optimizer**: Adam with initial learning rate 1e-3
-- **Batch Size**: 16
-- **Training Steps**: 360 epochs
-
-## Results
-Below are sample results of our model's performance:
-<p align="center">
-  <img src="results/subplot_1.png" width="30%" />
-  <img src="results/subplot_4.png" width="30%" />
-  <img src="results/subplot_5.png" width="30%" />
-  <h1>Comparison with other models </h1>
-  <img src="results/transformer.png" width="90%"/>
-</p>
-<!-- ![Super-Resolution Results](results/subplot_1.png)![](results/subplot_4.png)![](results/subplot_5.png) -->
-<!-- ![Comparisons](results/transformer.png) -->
-
-The model achieves high-quality image enhancement with minimal artifacts and sharp details.
-
-
-## References
-- [DAT: Dual Aggregation Transformer for Image Super-Resolution](https://arxiv.org/pdf/2308.03364)
-- [DF2K Dataset](https://data.vision.ee.ethz.ch/cvl/DIV2K/)
+</div>
 
 ---
-Feel free to contribute or report issues!
 
+## Highlights
+
+- Designed and trained a **lightweight variant of the Dual Aggregation Transformer (DAT)** with **738K parameters**, about **17.7% fewer than SwinIR-light** (897K).
+- Reaches **32.37 dB PSNR on Set5 (×4)**, within **0.07 dB of SwinIR-light**, with a smaller model.
+- Trained from scratch on **DF2K** (DIV2K + Flickr2K) for 360 epochs on **2× NVIDIA T4 GPUs**.
+- Benchmarked on **Set5, Set14 and Urban100** against ESRT, SwinIR-light and ELAN-light.
+- Written up as a full B.E. minor project report (Tribhuvan University, IOE Purwanchal Campus).
+
+## Motivation
+
+State-of-the-art super-resolution models such as SwinIR and ESRGAN deliver excellent quality, but their size and compute cost make them hard to deploy on mobile and edge devices. Pure CNN models are cheap, but they mainly capture local features and struggle to model long-range dependencies.
+
+**Goal:** keep the global modelling ability of transformers while cutting parameters and memory, so that high-quality SR becomes practical for resource-constrained settings.
+
+## Method
+
+LDAT follows the DAT design (Chen et al., ICCV 2023) with a reduced configuration. It has three stages: shallow feature extraction, deep feature extraction, and HR reconstruction.
+
+| Component | Role |
+|---|---|
+| **Shallow feature extraction** | A convolution maps the LR image into feature space. |
+| **Residual Groups (RGs)** | Stack Dual Aggregation Transformer Blocks (DATBs) with residual connections for stable training. |
+| **DSTB** (Dual Spatial Transformer Block) | Spatial window self-attention (SW-SA) captures spatial dependencies. |
+| **DCTB** (Dual Channel Transformer Block) | Channel-wise self-attention (CW-SA) models global channel relationships. |
+| **AIM** (Adaptive Interaction Module) | Fuses global self-attention with local convolution features. |
+| **SGFN** (Spatial-Gate Feed-Forward Network) | Spatial gating with depth-wise convolutions to refine features and reduce channel redundancy. |
+| **Reconstruction** | Convolutions plus pixel shuffle for efficient upsampling. |
+
+**Dual feature aggregation** happens at two levels:
+
+1. **Inter-block:** DSTB and DCTB alternate, so spatial and channel information are learned in a complementary way.
+2. **Intra-block:** AIM and SGFN couple local and global information inside each block.
+
+### Lightweight configuration
+
+| Hyper-parameter | Value |
+|---|---|
+| Residual groups | 4 |
+| DATB pairs (DSTB + DCTB) per group | 2 |
+| Channel dimension | 60 (original DAT: 180) |
+| Attention heads | 4 |
+| SGFN channel expansion factor | 3 |
+| Spatial window size | 8 × 16 |
+| Total parameters | **738K** |
+
+## Experimental Setup
+
+| Item | Details |
+|---|---|
+| Training data | DF2K: 800 DIV2K + 2,650 Flickr2K images |
+| Validation | First 10 images of the DF2K validation set (to speed up each epoch) |
+| Test sets | Set5, Set14, Urban100 |
+| Upscaling factor | ×4 |
+| Patch size / batch size | 64×64 / 16 for 215 epochs, then 32 up to 360 epochs |
+| Optimizer / loss | Adam / L1 loss |
+| Learning rate | 5e-4, halved at epochs 80, 130, 160, 180, 250, 260, 300 |
+| Augmentation | Random 90°/180°/270° rotations, horizontal flips |
+| Framework / hardware | PyTorch, 2× NVIDIA T4 |
+
+## Results
+
+### Quantitative (×4, PSNR dB / SSIM)
+
+| Method | Params (K) | Set5 | Set14 | Urban100 |
+|---|---:|---|---|---|
+| Bicubic | – | 28.42 / 0.8104 | 26.00 / 0.7027 | 23.14 / 0.6577 |
+| ESRT | 751 | 32.19 / 0.8947 | 28.69 / 0.7833 | 26.39 / 0.7962 |
+| SwinIR-light | 897 | **32.44** / **0.8976** | 28.77 / 0.7858 | 26.47 / 0.7980 |
+| ELAN-light | **601** | 32.43 / 0.8975 | **28.78** / **0.7858** | **26.54** / **0.7982** |
+| **LDAT (ours)** | 738 | 32.37 / 0.8940 | 28.63 / 0.7825 | 26.09 / 0.7860 |
+
+**Reading the table honestly:** LDAT is competitive with, and slightly behind, the strongest lightweight transformers, while being smaller than SwinIR-light and ESRT. The gap is largest on Urban100, which is dominated by repetitive structures and long straight edges. LDAT beats ESRT on Set5 (+0.18 dB). It also gains about 9 dB PSNR over bicubic interpolation on Urban100.
+
+### Qualitative: Visual Comparisons
+
+Sample results from LDAT:
+
+<p align="center">
+  <img src="results/subplot_1.png" width="32%"/>
+  <img src="results/subplot_4.png" width="32%"/>
+  <img src="results/subplot_5.png" width="32%"/>
+</p>
+
+### Comparison with Other Models
+
+<p align="center">
+  <img src="results/transformer.png" width="85%" alt="Comparison with other models"/>
+</p>
+
+LDAT recovers sharper edges and window/grid structures than bicubic interpolation, with minimal artifacts.
+
+### Training dynamics
+
+Training and validation loss converge smoothly. Validation PSNR rises from about 28.6 dB to about 30.5 dB over the 360 epochs, with SSIM reaching about 0.836. These figures are on the 10-image DF2K validation subset, so they are not comparable with the benchmark numbers above. Curves are in the [report](minor_project_Report.pdf) (Section 4.4).
+
+## Limitations and Future Work
+
+- LDAT is still more compute- and memory-hungry than lightweight **CNN-based** SR models.
+- Performance on Urban100 trails ELAN-light and SwinIR-light; longer training, a larger patch size and distillation are natural next steps.
+- Planned: more efficient attention implementations, quantization/pruning for edge deployment, and extension to other low-level vision tasks such as denoising and deblurring.
+- Medical and remote-sensing imagery are important SR application areas and have not yet been evaluated.
+
+## Repository Structure
+
+```
+.
+├── model/              # LDAT architecture (DSTB, DCTB, AIM, SGFN, reconstruction)
+├── dataset/            # Data loading and augmentation
+├── utilities/          # Metrics (PSNR/SSIM) and helper functions
+├── results/            # Qualitative results and figures
+├── model_train.py      # Training script
+├── main.py             # Entry point / inference
+└── minor_project_Report.pdf
+```
+
+## Getting Started
+
+```bash
+git clone https://github.com/arjelmilan/Image-super-Resolution-.git
+cd Image-super-Resolution-
+pip install torch torchvision numpy pillow
+```
+
+**Train**
+
+```bash
+python model_train.py
+```
+
+**Run / evaluate**
+
+```bash
+python main.py
+```
+
+Datasets: [DIV2K](https://data.vision.ee.ethz.ch/cvl/DIV2K/) and Flickr2K, evaluated on Set5, Set14 and Urban100.
+
+## Team
+
+Developed as a B.E. Computer Engineering minor project at the Department of Electronics and Computer Engineering, IOE Purwanchal Campus, Tribhuvan University, under the supervision of Asst. Prof. Pukar Karki.
+
+- Milan Arjel
+- Samir Bidari
+- Sandeep Poudel
+- Sandesh Pokharel
+
+## References
+
+1. Z. Chen, Y. Zhang, J. Gu, L. Kong, X. Yuan, et al. *Dual Aggregation Transformer for Image Super-Resolution.* ICCV 2023. [arXiv:2308.03364](https://arxiv.org/abs/2308.03364)
+2. J. Liang et al. *SwinIR: Image Restoration Using Swin Transformer.* [arXiv:2108.10257](https://arxiv.org/abs/2108.10257)
+3. Z. Lu et al. *Transformer for Single Image Super-Resolution (ESRT).* [arXiv:2108.11084](https://arxiv.org/abs/2108.11084)
+4. X. Zhang et al. *Efficient Long-Range Attention Network for Image Super-Resolution (ELAN).* [arXiv:2203.06697](https://arxiv.org/abs/2203.06697)
+5. R. Timofte et al. *NTIRE 2017 Challenge on Single Image Super-Resolution* (DIV2K). CVPRW 2017.
+6. B. Lim et al. *Enhanced Deep Residual Networks for Single Image Super-Resolution* (Flickr2K). CVPRW 2017.
+
+## Acknowledgements
+
+This work builds on the official DAT design by Chen et al. LDAT is a reduced-size re-implementation and training study, not the original authors' code.
