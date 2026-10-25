@@ -77,17 +77,6 @@ LDAT follows the DAT design (Chen et al., ICCV 2023) with a reduced configuratio
 
 ## Results
 
-### Quantitative (×4, PSNR dB / SSIM)
-
-| Method | Params (K) | Set5 | Set14 | Urban100 |
-|---|---:|---|---|---|
-| Bicubic | – | 28.42 / 0.8104 | 26.00 / 0.7027 | 23.14 / 0.6577 |
-| ESRT | 751 | 32.19 / 0.8947 | 28.69 / 0.7833 | 26.39 / 0.7962 |
-| SwinIR-light | 897 | **32.44** / **0.8976** | 28.77 / 0.7858 | 26.47 / 0.7980 |
-| ELAN-light | **601** | 32.43 / 0.8975 | **28.78** / **0.7858** | **26.54** / **0.7982** |
-| **LDAT (ours)** | 738 | 32.37 / 0.8940 | 28.63 / 0.7825 | 26.09 / 0.7860 |
-
-**Reading the table honestly:** LDAT is competitive with, and slightly behind, the strongest lightweight transformers, while being smaller than SwinIR-light and ESRT. The gap is largest on Urban100, which is dominated by repetitive structures and long straight edges. LDAT beats ESRT on Set5 (+0.18 dB). It also gains about 9 dB PSNR over bicubic interpolation on Urban100.
 
 ### Qualitative: Visual Comparisons
 
